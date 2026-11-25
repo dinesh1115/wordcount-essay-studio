@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Essay Practice Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Merriweather for comfortable reading/writing -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        paper: {
+                            light: '#FAF9F6',
+                            dark: '#18181B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom subtle scrollbars for distraction-free focus */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.7);
+        }
+        
+        /* Smooth transitions */
+        body, header, textarea, input, button, div {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Remove default textarea focus outline to rely on clean container styling */
+        textarea:focus, input:focus {
+            outline: none;
+        }
+
+        /* Timer pulse animation when low */
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-red {
+            animation: pulse-red 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900 dark:selection:bg-indigo-900/50 dark:selection:text-indigo-200">
+
+    <!-- Top Navigation & Utility Bar -->
+    <header id="top-bar" class="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 px-4 py-2.5 shadow-sm">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Brand & Auto-save status -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-lg tracking-tight">
+                    <i data-lucide="pen-tool" class="w-5 h-5"></i>
+                    <span>EssayDesk</span>
+                </div>
+                <span class="hidden sm:inline-block h-4 w-px bg-slate-200 dark:bg-zinc-700"></span>
+                <div id="save-status" class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-zinc-400">
+                    <i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>Saved locally</span>
+                </div>
+            </div>
+
+            <!-- Exam Timer Widget -->
+            <div class="flex items-center bg-slate-100 dark:bg-zinc-800/80 rounded-xl p-1 border border-slate-200 dark:border-zinc-700/80 shadow-inner">
+                <!-- Mode Switcher (Countdown vs Stopwatch) -->
+                <button id="timer-mode-btn" title="Switch between Countdown and Stopwatch" class="px-2 py-1 text-xs font-semibold rounded-lg text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 flex items-center gap-1">
+                    <i id="timer-mode-icon" data-lucide="hourglass" class="w-3.5 h-3.5 text-indigo-500"></i>
+                    <span id="timer-mode-label" class="hidden md:inline">Timer</span>
+                </button>
+
+                <!-- Digital Clock Display -->
+                <div id="timer-display" class="font-mono font-semibold text-base sm:text-lg px-3 py-0.5 text-slate-800 dark:text-zinc-100 tracking-wider select-none">
+                    30:00
+                </div>
+
+                <!-- Timer Controls -->
+                <div class="flex items-center gap-1 pr-1">
+                    <button id="timer-start-btn" title="Start Timer" class="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+                        <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                    </button>
+                    <button id="timer-pause-btn" title="Pause Timer" class="hidden p-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-sm">
+                        <i data-lucide="pause" class="w-3.5 h-3.5 fill-current"></i>
+                    </button>
+                    <button id="timer-reset-btn" title="Reset Timer" class="p-1.5 rounded-lg text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <!-- Preset Dropdown Trigger -->
+                    <div class="relative">
+                        <button id="timer-settings-btn" title="Set Time Presets" class="p-1.5 rounded-lg text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700">
+                            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                        </button>
+                        
+                        <!-- Timer Presets Popover -->
+                        <div id="timer-popover" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-700 p-3 z-50">
+                            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Countdown Presets</div>
+                            <div class="grid grid-cols-2 gap-1.5 mb-3">
+                                <button data-mins="15" class="preset-time-btn py-1.5 px-2 text-xs font-medium rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">15 Min (Banking)</button>
+                                <button data-mins="20" class="preset-time-btn py-1.5 px-2 text-xs font-medium rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">20 Min</button>
+                                <button data-mins="30" class="preset-time-btn py-1.5 px-2 text-xs font-medium rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">30 Min (UPSC)</button>
+                                <button data-mins="60" class="preset-time-btn py-1.5 px-2 text-xs font-medium rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800">60 Min</button>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">Custom Minutes</div>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="custom-minutes-input" min="1" max="300" placeholder="e.g. 45" class="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100">
+                                <button id="apply-custom-time-btn" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utility Actions -->
+            <div class="flex items-center gap-1.5">
+                <!-- Font Switcher (Sans vs Serif) -->
+                <button id="font-toggle-btn" title="Switch Font Style (Sans / Serif)" class="p-2 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent hover:border-slate-200 dark:hover:border-zinc-700 text-xs font-semibold flex items-center gap-1">
+                    <i data-lucide="type" class="w-4 h-4"></i>
+                    <span id="font-label" class="hidden lg:inline">Sans</span>
+                </button>
+
+                <!-- Focus Mode Toggle -->
+                <button id="focus-toggle-btn" title="Toggle Distraction-Free Focus Mode" class="p-2 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent hover:border-slate-200 dark:hover:border-zinc-700">
+                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Copy Essay -->
+                <button id="copy-btn" title="Copy Essay to Clipboard" class="p-2 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent hover:border-slate-200 dark:hover:border-zinc-700 flex items-center gap-1.5 text-xs font-medium">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Copy</span>
+                </button>
+
+                <!-- Download .txt -->
+                <button id="download-btn" title="Download as .txt" class="p-2 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent hover:border-slate-200 dark:hover:border-zinc-700 flex items-center gap-1.5 text-xs font-medium">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">.txt</span>
+                </button>
+
+                <!-- Clear Text -->
+                <button id="clear-btn" title="Clear Essay" class="p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/50 flex items-center gap-1.5 text-xs font-medium">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+
+                <span class="h-4 w-px bg-slate-200 dark:bg-zinc-700 mx-0.5"></span>
+
+                <!-- Dark/Light Theme Toggle -->
+                <button id="theme-toggle-btn" title="Toggle Dark/Light Mode" class="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700">
+                    <i id="theme-icon-dark" data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+                    <i id="theme-icon-light" data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-4">
+        
+        <!-- Word Limit Target & Progress Bar Card -->
+        <section id="target-section" class="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-4 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-indigo-500"></i>
+                        Word Limit Target:
+                    </span>
+                    
+                    <!-- Preset Target Pills -->
+                    <div class="flex flex-wrap items-center gap-1">
+                        <button data-target="150" class="target-preset-btn px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40">150</button>
+                        <button data-target="200" class="target-preset-btn px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40">200</button>
+                        <button data-target="250" class="target-preset-btn px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40">250</button>
+                        <button data-target="500" class="target-preset-btn px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40">500</button>
+                        <button data-target="1000" class="target-preset-btn px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40">1000</button>
+                        
+                        <!-- Custom Target Input -->
+                        <div class="flex items-center ml-1">
+                            <input type="number" id="custom-target-input" min="10" max="10000" value="250" aria-label="Custom Word Limit" class="w-16 px-2 py-0.5 text-xs font-mono font-semibold rounded-md bg-slate-50 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Word Count Ratio & Status Badge -->
+                <div class="flex items-center gap-2">
+                    <span id="limit-status-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                        Start writing
+                    </span>
+                    <span class="font-mono text-sm font-bold text-slate-800 dark:text-zinc-100">
+                        <span id="progress-word-count">0</span> / <span id="progress-target-count">250</span> <span class="text-xs font-normal text-slate-500">words</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Visual Progress Bar -->
+            <div class="w-full h-2.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div id="word-progress-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <!-- Exam Paper Sheet Container -->
+        <section class="flex-1 flex flex-col bg-paper-light dark:bg-paper-dark rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-sm overflow-hidden">
+            
+            <!-- Essay Prompt / Topic Input Box -->
+            <div class="border-b border-slate-200/80 dark:border-zinc-800/90 bg-slate-50/70 dark:bg-zinc-900/50 px-5 sm:px-8 py-4">
+                <div class="flex items-center justify-between mb-1">
+                    <label for="essay-topic" class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                        <i data-lucide="file-question" class="w-3.5 h-3.5"></i>
+                        Essay Topic / Question Prompt
+                    </label>
+                    <button id="sample-topic-btn" class="text-[11px] font-medium text-slate-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3 h-3"></i>
+                        Insert Sample Topic
+                    </button>
+                </div>
+                <textarea id="essay-topic" rows="2" placeholder="Paste or type your exam essay prompt here (e.g., 'Discuss the role of Digital Public Infrastructure in accelerating financial inclusion in India...')" class="w-full bg-transparent resize-none text-slate-800 dark:text-zinc-100 font-semibold text-base sm:text-lg placeholder:text-slate-400 dark:placeholder:text-zinc-600 leading-snug"></textarea>
+            </div>
+
+            <!-- Main Distraction-Free Writing Area -->
+            <div class="flex-1 flex flex-col relative">
+                <textarea id="essay-editor" spellcheck="false" placeholder="Begin typing your essay here... Keep track of your structure: Introduction, Body Paragraphs, and Conclusion." class="flex-1 w-full min-h-[380px] sm:min-h-[460px] bg-transparent resize-none px-5 sm:px-8 py-6 text-slate-800 dark:text-zinc-200 text-base sm:text-[17px] leading-relaxed placeholder:text-slate-400/80 dark:placeholder:text-zinc-600 font-sans"></textarea>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Live Statistics Bar -->
+    <footer class="sticky bottom-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-slate-200 dark:border-zinc-800 px-4 py-2.5">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-xs sm:text-sm">
+            
+            <!-- Primary Metrics -->
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-zinc-400">Words:</span>
+                    <span id="stat-words" class="font-mono font-bold text-slate-900 dark:text-white text-sm sm:text-base">0</span>
+                </div>
+                
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-zinc-400">Chars (with spaces):</span>
+                    <span id="stat-chars-with" class="font-mono font-semibold text-slate-800 dark:text-zinc-200">0</span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-zinc-400">Chars (no spaces):</span>
+                    <span id="stat-chars-without" class="font-mono font-semibold text-slate-800 dark:text-zinc-200">0</span>
+                </div>
+            </div>
+
+            <!-- Structural Metrics -->
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-zinc-400">Sentences:</span>
+                    <span id="stat-sentences" class="font-mono font-semibold text-slate-800 dark:text-zinc-200">0</span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-500 dark:text-zinc-400">Paragraphs:</span>
+                    <span id="stat-paragraphs" class="font-mono font-semibold text-slate-800 dark:text-zinc-200">0</span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span class="text-slate-500 dark:text-zinc-400">Read time:</span>
+                    <span id="stat-read-time" class="font-mono font-semibold text-slate-800 dark:text-zinc-200">0 sec</span>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- Custom Confirmation Modal (Replaces native confirm()) -->
+    <div id="clear-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-zinc-800 shadow-2xl transform transition-all">
+            <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400 mb-3">
+                <div class="p-2 bg-rose-100 dark:bg-rose-950/60 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Clear Essay?</h3>
+            </div>
+            <p class="text-sm text-slate-600 dark:text-zinc-400 mb-6 leading-relaxed">
+                Are you sure you want to clear your current essay text? This action cannot be undone.
+            </p>
+            <div class="flex items-center justify-end gap-2.5">
+                <button id="cancel-clear-btn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700">
+                    Cancel
+                </button>
+                <button id="confirm-clear-btn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
+                    Yes, Clear Text
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Time-Up Alert Modal (Replaces native alert()) -->
+    <div id="timeup-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-zinc-800 shadow-2xl text-center">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alarm-clock-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Time's Up!</h3>
+            <p class="text-sm text-slate-600 dark:text-zinc-400 mb-5">
+                Your exam practice timer has ended. You wrote <span id="timeup-word-count" class="font-bold text-slate-900 dark:text-white">0</span> words.
+            </p>
+            <button id="close-timeup-btn" class="w-full py-2.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+                Review My Essay
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast" class="fixed bottom-16 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2">
+        <i id="toast-icon" data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toast-message">Action completed</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            lucide.createIcons();
+
+            // --- DOM Elements ---
+            const essayEditor = document.getElementById('essay-editor');
+            const essayTopic = document.getElementById('essay-topic');
+            const saveStatus = document.getElementById('save-status');
+            
+            // Stats Elements
+            const statWords = document.getElementById('stat-words');
+            const statCharsWith = document.getElementById('stat-chars-with');
+            const statCharsWithout = document.getElementById('stat-chars-without');
+            const statSentences = document.getElementById('stat-sentences');
+            const statParagraphs = document.getElementById('stat-paragraphs');
+            const statReadTime = document.getElementById('stat-read-time');
+
+            // Target & Progress Elements
+            const customTargetInput = document.getElementById('custom-target-input');
+            const targetPresetBtns = document.querySelectorAll('.target-preset-btn');
+            const progressWordCount = document.getElementById('progress-word-count');
+            const progressTargetCount = document.getElementById('progress-target-count');
+            const wordProgressBar = document.getElementById('word-progress-bar');
+            const limitStatusBadge = document.getElementById('limit-status-badge');
+
+            // Timer Elements
+            const timerModeBtn = document.getElementById('timer-mode-btn');
+            const timerModeIcon = document.getElementById('timer-mode-icon');
+            const timerModeLabel = document.getElementById('timer-mode-label');
+            const timerDisplay = document.getElementById('timer-display');
+            const timerStartBtn = document.getElementById('timer-start-btn');
+            const timerPauseBtn = document.getElementById('timer-pause-btn');
+            const timerResetBtn = document.getElementById('timer-reset-btn');
+            const timerSettingsBtn = document.getElementById('timer-settings-btn');
+            const timerPopover = document.getElementById('timer-popover');
+            const presetTimeBtns = document.querySelectorAll('.preset-time-btn');
+            const customMinutesInput = document.getElementById('custom-minutes-input');
+            const applyCustomTimeBtn = document.getElementById('apply-custom-time-btn');
+
+            // Utility & Modal Elements
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const fontToggleBtn = document.getElementById('font-toggle-btn');
+            const fontLabel = document.getElementById('font-label');
+            const focusToggleBtn = document.getElementById('focus-toggle-btn');
+            const targetSection = document.getElementById('target-section');
+            const copyBtn = document.getElementById('copy-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const sampleTopicBtn = document.getElementById('sample-topic-btn');
+
+            const clearModal = document.getElementById('clear-modal');
+            const cancelClearBtn = document.getElementById('cancel-clear-btn');
+            const confirmClearBtn = document.getElementById('confirm-clear-btn');
+            
+            const timeupModal = document.getElementById('timeup-modal');
+            const timeupWordCount = document.getElementById('timeup-word-count');
+            const closeTimeupBtn = document.getElementById('close-timeup-btn');
+
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            // --- Application State ---
+            let state = {
+                topic: '',
+                content: '',
+                targetWords: 250,
+                theme: 'light',
+                font: 'sans', // 'sans' or 'serif'
+                focusMode: false
+            };
+
+            // Timer State
+            let timerState = {
+                mode: 'countdown', // 'countdown' | 'stopwatch'
+                initialSeconds: 30 * 60, // Default 30 mins (UPSC standard)
+                currentSeconds: 30 * 60,
+                isRunning: false,
+                intervalId: null
+            };
+
+            // Sample Topics for Competitive Exams (UPSC / RBI / SBI PO)
+            const sampleTopics = [
+                "Digital Public Infrastructure (DPI) as a catalyst for inclusive economic growth in India.",
+                "Balancing rapid urbanization with ecological sustainability in developing economies.",
+                "Artificial Intelligence in governance: Opportunities for efficiency vs. ethical challenges.",
+                "Financial literacy is the cornerstone of sustainable banking and economic resilience.",
+                "Climate change adaptation requires local innovation as much as global cooperation."
+            ];
+
+            // --- Helper: Toast Notification ---
+            let toastTimeout;
+            function showToast(msg) {
+                toastMessage.textContent = msg;
+                toast.classList.remove('translate-y-10', 'opacity-0');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.add('translate-y-10', 'opacity-0');
+                }, 2500);
+            }
+
+            // --- LocalStorage Persistence ---
+            const STORAGE_KEY = 'essaydesk_exam_studio_v1';
+
+            function loadFromStorage() {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        state = { ...state, ...parsed };
+                    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        state.theme = 'dark';
+                    }
+                } catch (e) {
+                    console.error('Failed to load state from localStorage:', e);
+                }
+
+                // Apply loaded state to UI
+                essayTopic.value = state.topic || '';
+                essayEditor.value = state.content || '';
+                customTargetInput.value = state.targetWords || 250;
+                applyTheme(state.theme);
+                applyFont(state.font);
+                updateTargetPresetHighlight(state.targetWords);
+                analyzeText();
+            }
+
+            let saveTimeout;
+            function saveToStorage() {
+                saveStatus.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-indigo-500"></i><span>Saving...</span>`;
+                lucide.createIcons();
+
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    try {
+                        state.topic = essayTopic.value;
+                        state.content = essayEditor.value;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                        saveStatus.innerHTML = `<i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-500"></i><span>Saved locally</span>`;
+                        lucide.createIcons();
+                    } catch (e) {
+                        saveStatus.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-500"></i><span>Save failed</span>`;
+                        lucide.createIcons();
+                    }
+                }, 350);
+            }
+
+            // --- Text Analysis & Live Statistics ---
+            function analyzeText() {
+                const text = essayEditor.value;
+                const trimmed = text.trim();
+
+                // 1. Word Count (Accurate splitting by whitespace)
+                const wordsArray = trimmed ? trimmed.split(/\s+/).filter(w => w.length > 0) : [];
+                const wordCount = wordsArray.length;
+
+                // 2. Character Counts
+                const charsWithSpaces = text.length;
+                const charsWithoutSpaces = text.replace(/\s/g, '').length;
+
+                // 3. Sentence Count (Splits on ., !, ? followed by space or end of string)
+                const sentencesArray = trimmed ? trimmed.split(/[.!?]+(?:\s+|$)/).filter(s => s.trim().length > 0) : [];
+                const sentenceCount = sentencesArray.length;
+
+                // 4. Paragraph Count (Non-empty lines separated by newlines)
+                const paragraphsArray = trimmed ? trimmed.split(/\n+/).filter(p => p.trim().length > 0) : [];
+                const paragraphCount = paragraphsArray.length;
+
+                // 5. Estimated Reading Time (Avg 200 words per minute)
+                let readTimeText = '0 sec';
+                if (wordCount > 0) {
+                    const totalSeconds = Math.ceil((wordCount / 200) * 60);
+                    if (totalSeconds < 60) {
+                        readTimeText = `${totalSeconds} sec`;
+                    } else {
+                        const mins = Math.floor(totalSeconds / 60);
+                        const secs = totalSeconds % 60;
+                        readTimeText = secs > 0 ? `${mins}m ${secs}s` : `${mins} min`;
+                    }
+                }
+
+                // Update DOM Stats
+                statWords.textContent = wordCount.toLocaleString();
+                statCharsWith.textContent = charsWithSpaces.toLocaleString();
+                statCharsWithout.textContent = charsWithoutSpaces.toLocaleString();
+                statSentences.textContent = sentenceCount.toLocaleString();
+                statParagraphs.textContent = paragraphCount.toLocaleString();
+                statReadTime.textContent = readTimeText;
+
+                // Update Progress Bar & Word Limit Indicators
+                updateProgressBar(wordCount, state.targetWords);
+            }
+
+            function updateProgressBar(currentWords, targetWords) {
+                const safeTarget = Math.max(1, parseInt(targetWords, 10) || 250);
+                progressWordCount.textContent = currentWords;
+                progressTargetCount.textContent = safeTarget;
+
+                const percentage = Math.min(100, (currentWords / safeTarget) * 100);
+                wordProgressBar.style.width = `${percentage}%`;
+
+                // Reset progress bar & badge color classes
+                wordProgressBar.className = 'h-full rounded-full transition-all duration-300 ease-out';
+                limitStatusBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full transition-colors';
+
+                const ratio = currentWords / safeTarget;
+
+                if (currentWords === 0) {
+                    wordProgressBar.classList.add('bg-indigo-500');
+                    limitStatusBadge.classList.add('bg-slate-100', 'dark:bg-zinc-800', 'text-slate-600', 'dark:text-zinc-400');
+                    limitStatusBadge.textContent = 'Ready';
+                } else if (ratio > 1.05) {
+                    // Strictly over limit (> 105%) -> Red
+                    wordProgressBar.classList.add('bg-rose-500');
+                    limitStatusBadge.classList.add('bg-rose-100', 'dark:bg-rose-950/70', 'text-rose-700', 'dark:text-rose-300');
+                    limitStatusBadge.textContent = `+${currentWords - safeTarget} Over Limit`;
+                } else if (ratio >= 0.90 && ratio <= 1.05) {
+                    // Ideal exam range (90% - 105%) -> Emerald Green
+                    wordProgressBar.classList.add('bg-emerald-500');
+                    limitStatusBadge.classList.add('bg-emerald-100', 'dark:bg-emerald-950/70', 'text-emerald-700', 'dark:text-emerald-300');
+                    limitStatusBadge.textContent = 'Ideal Range';
+                } else if (ratio >= 0.75) {
+                    // Approaching target (75% - 89%) -> Amber
+                    wordProgressBar.classList.add('bg-amber-500');
+                    limitStatusBadge.classList.add('bg-amber-100', 'dark:bg-amber-950/70', 'text-amber-700', 'dark:text-amber-300');
+                    limitStatusBadge.textContent = `${safeTarget - currentWords} words left`;
+                } else {
+                    // Building up (< 75%) -> Indigo
+                    wordProgressBar.classList.add('bg-indigo-500');
+                    limitStatusBadge.classList.add('bg-indigo-50', 'dark:bg-indigo-950/60', 'text-indigo-700', 'dark:text-indigo-300');
+                    limitStatusBadge.textContent = `${Math.round(ratio * 100)}% of target`;
+                }
+            }
+
+            // --- Word Limit Target Controls ---
+            function setWordTarget(val) {
+                const parsed = parseInt(val, 10);
+                if (!isNaN(parsed) && parsed >= 10) {
+                    state.targetWords = parsed;
+                    customTargetInput.value = parsed;
+                    updateTargetPresetHighlight(parsed);
+                    analyzeText();
+                    saveToStorage();
+                }
+            }
+
+            function updateTargetPresetHighlight(targetVal) {
+                targetPresetBtns.forEach(btn => {
+                    const btnVal = parseInt(btn.dataset.target, 10);
+                    if (btnVal === targetVal) {
+                        btn.classList.remove('bg-slate-100', 'dark:bg-zinc-800', 'text-slate-600', 'dark:text-zinc-300');
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                    } else {
+                        btn.classList.add('bg-slate-100', 'dark:bg-zinc-800', 'text-slate-600', 'dark:text-zinc-300');
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                    }
+                });
+            }
+
+            targetPresetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setWordTarget(btn.dataset.target);
+                });
+            });
+
+            customTargetInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val > 0) {
+                    state.targetWords = val;
+                    updateTargetPresetHighlight(val);
+                    analyzeText();
+                    saveToStorage();
+                }
+            });
+
+            // --- Timer & Stopwatch Logic ---
+            function formatTime(totalSeconds) {
+                const hrs = Math.floor(totalSeconds / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                const secs = totalSeconds % 60;
+                if (hrs > 0) {
+                    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            function updateTimerUI() {
+                timerDisplay.textContent = formatTime(timerState.currentSeconds);
+                
+                // Warning visual when < 60 seconds left in countdown mode
+                if (timerState.mode === 'countdown' && timerState.currentSeconds <= 60 && timerState.currentSeconds > 0 && timerState.isRunning) {
+                    timerDisplay.classList.add('text-rose-600', 'dark:text-rose-400', 'animate-pulse-red');
+                } else {
+                    timerDisplay.classList.remove('text-rose-600', 'dark:text-rose-400', 'animate-pulse-red');
+                }
+
+                if (timerState.isRunning) {
+                    timerStartBtn.classList.add('hidden');
+                    timerPauseBtn.classList.remove('hidden');
+                } else {
+                    timerStartBtn.classList.remove('hidden');
+                    timerPauseBtn.classList.add('hidden');
+                }
+            }
+
+            function startTimer() {
+                if (timerState.isRunning) return;
+                if (timerState.mode === 'countdown' && timerState.currentSeconds <= 0) {
+                    timerState.currentSeconds = timerState.initialSeconds;
+                }
+
+                timerState.isRunning = true;
+                updateTimerUI();
+
+                timerState.intervalId = setInterval(() => {
+                    if (timerState.mode === 'countdown') {
+                        if (timerState.currentSeconds > 0) {
+                            timerState.currentSeconds--;
+                            updateTimerUI();
+                        } else {
+                            // Countdown reached 0
+                            pauseTimer();
+                            timeupWordCount.textContent = statWords.textContent;
+                            timeupModal.classList.remove('hidden');
+                        }
+                    } else {
+                        // Stopwatch mode
+                        timerState.currentSeconds++;
+                        updateTimerUI();
+                    }
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                timerState.isRunning = false;
+                clearInterval(timerState.intervalId);
+                updateTimerUI();
+            }
+
+            function resetTimer() {
+                pauseTimer();
+                if (timerState.mode === 'countdown') {
+                    timerState.currentSeconds = timerState.initialSeconds;
+                } else {
+                    timerState.currentSeconds = 0;
+                }
+                updateTimerUI();
+            }
+
+            function setCountdownMinutes(mins) {
+                const validMins = Math.max(1, Math.min(300, parseInt(mins, 10) || 30));
+                timerState.mode = 'countdown';
+                timerState.initialSeconds = validMins * 60;
+                timerState.currentSeconds = validMins * 60;
+                updateModeUI();
+                resetTimer();
+                timerPopover.classList.add('hidden');
+                showToast(`Timer set to ${validMins} minutes`);
+            }
+
+            function updateModeUI() {
+                if (timerState.mode === 'countdown') {
+                    timerModeIcon.setAttribute('data-lucide', 'hourglass');
+                    timerModeLabel.textContent = 'Timer';
+                } else {
+                    timerModeIcon.setAttribute('data-lucide', 'timer');
+                    timerModeLabel.textContent = 'Stopwatch';
+                }
+                lucide.createIcons();
+            }
+
+            timerModeBtn.addEventListener('click', () => {
+                pauseTimer();
+                if (timerState.mode === 'countdown') {
+                    timerState.mode = 'stopwatch';
+                    timerState.currentSeconds = 0;
+                    showToast('Switched to Stopwatch mode');
+                } else {
+                    timerState.mode = 'countdown';
+                    timerState.currentSeconds = timerState.initialSeconds;
+                    showToast('Switched to Countdown mode');
+                }
+                updateModeUI();
+                updateTimerUI();
+            });
+
+            timerStartBtn.addEventListener('click', startTimer);
+            timerPauseBtn.addEventListener('click', pauseTimer);
+            timerResetBtn.addEventListener('click', resetTimer);
+
+            timerSettingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                timerPopover.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!timerPopover.contains(e.target) && !timerSettingsBtn.contains(e.target)) {
+                    timerPopover.classList.add('hidden');
+                }
+            });
+
+            presetTimeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setCountdownMinutes(btn.dataset.mins);
+                });
+            });
+
+            applyCustomTimeBtn.addEventListener('click', () => {
+                if (customMinutesInput.value) {
+                    setCountdownMinutes(customMinutesInput.value);
+                    customMinutesInput.value = '';
+                }
+            });
+
+            closeTimeupBtn.addEventListener('click', () => {
+                timeupModal.classList.add('hidden');
+            });
+
+            // --- Theme, Font & Focus Mode ---
+            function applyTheme(theme) {
+                const html = document.documentElement;
+                if (theme === 'dark') {
+                    html.classList.add('dark');
+                    html.classList.remove('light');
+                } else {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                }
+                state.theme = theme;
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+                applyTheme(nextTheme);
+                saveToStorage();
+            });
+
+            function applyFont(font) {
+                if (font === 'serif') {
+                    essayEditor.classList.remove('font-sans');
+                    essayEditor.classList.add('font-serif');
+                    fontLabel.textContent = 'Serif';
+                } else {
+                    essayEditor.classList.remove('font-serif');
+                    essayEditor.classList.add('font-sans');
+                    fontLabel.textContent = 'Sans';
+                }
+                state.font = font;
+            }
+
+            fontToggleBtn.addEventListener('click', () => {
+                const nextFont = state.font === 'sans' ? 'serif' : 'sans';
+                applyFont(nextFont);
+                saveToStorage();
+                showToast(`Font switched to ${nextFont === 'serif' ? 'Serif' : 'Sans-serif'}`);
+            });
+
+            focusToggleBtn.addEventListener('click', () => {
+                state.focusMode = !state.focusMode;
+                if (state.focusMode) {
+                    targetSection.classList.add('hidden');
+                    focusToggleBtn.classList.add('bg-indigo-100', 'dark:bg-indigo-900/50', 'text-indigo-600', 'dark:text-indigo-400');
+                    showToast('Focus mode enabled');
+                } else {
+                    targetSection.classList.remove('hidden');
+                    focusToggleBtn.classList.remove('bg-indigo-100', 'dark:bg-indigo-900/50', 'text-indigo-600', 'dark:text-indigo-400');
+                    showToast('Focus mode disabled');
+                }
+            });
+
+            // --- Utility Actions (Copy, Download, Clear, Sample Topic) ---
+            copyBtn.addEventListener('click', () => {
+                const topicText = essayTopic.value.trim();
+                const bodyText = essayEditor.value.trim();
+                if (!topicText && !bodyText) {
+                    showToast('Nothing to copy yet');
+                    return;
+                }
+
+                const fullText = topicText ? `Topic: ${topicText}\n\n${bodyText}` : bodyText;
+                
+                // Reliable clipboard copy using hidden textarea & execCommand
+                const tempArea = document.createElement('textarea');
+                tempArea.value = fullText;
+                tempArea.style.position = 'fixed';
+                tempArea.style.left = '-9999px';
+                document.body.appendChild(tempArea);
+                tempArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Essay copied to clipboard!');
+                } catch (err) {
+                    showToast('Unable to copy text');
+                }
+                document.body.removeChild(tempArea);
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const topicText = essayTopic.value.trim();
+                const bodyText = essayEditor.value;
+                if (!topicText && !bodyText.trim()) {
+                    showToast('Write something before downloading');
+                    return;
+                }
+
+                const dateStr = new Date().toISOString().slice(0, 10);
+                const wordCount = statWords.textContent;
+                let fileContent = `Date: ${dateStr}\nWord Count: ${wordCount} / ${state.targetWords} target\n`;
+                if (topicText) {
+                    fileContent += `Topic: ${topicText}\n`;
+                }
+                fileContent += `${'-'.repeat(50)}\n\n${bodyText}`;
+
+                const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Essay_Practice_${dateStr}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast('Downloaded as .txt');
+            });
+
+            clearBtn.addEventListener('click', () => {
+                if (!essayEditor.value.trim() && !essayTopic.value.trim()) {
+                    showToast('Editor is already empty');
+                    return;
+                }
+                clearModal.classList.remove('hidden');
+            });
+
+            cancelClearBtn.addEventListener('click', () => {
+                clearModal.classList.add('hidden');
+            });
+
+            confirmClearBtn.addEventListener('click', () => {
+                essayEditor.value = '';
+                essayTopic.value = '';
+                clearModal.classList.add('hidden');
+                analyzeText();
+                saveToStorage();
+                essayEditor.focus();
+                showToast('Essay cleared');
+            });
+
+            sampleTopicBtn.addEventListener('click', () => {
+                const current = essayTopic.value.trim();
+                let nextTopic = sampleTopics[Math.floor(Math.random() * sampleTopics.length)];
+                // Ensure a different topic is picked if possible
+                if (nextTopic === current && sampleTopics.length > 1) {
+                    nextTopic = sampleTopics[(sampleTopics.indexOf(current) + 1) % sampleTopics.length];
+                }
+                essayTopic.value = nextTopic;
+                saveToStorage();
+                essayEditor.focus();
+            });
+
+            // --- Editor Event Listeners ---
+            essayEditor.addEventListener('input', () => {
+                analyzeText();
+                saveToStorage();
+            });
+
+            essayTopic.addEventListener('input', () => {
+                saveToStorage();
+            });
+
+            // Support Tab key indentation inside textarea for clean paragraph formatting
+            essayEditor.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = essayEditor.selectionStart;
+                    const end = essayEditor.selectionEnd;
+                    essayEditor.value = essayEditor.value.substring(0, start) + '    ' + essayEditor.value.substring(end);
+                    essayEditor.selectionStart = essayEditor.selectionEnd = start + 4;
+                    analyzeText();
+                    saveToStorage();
+                }
+            });
+
+            // Initialize App
+            loadFromStorage();
+            updateTimerUI();
+        });
+    </script>
+</body>
+</html>
