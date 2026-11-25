@@ -6,7 +6,7 @@ A clean, distraction-free web-based essay writing studio built for descriptive e
 
 ---
 
-## ✨ Features
+##  Features
 
 - **Distraction-Free Paper Layout:** Editable exam topic header with built-in sample prompts, `Tab`-key paragraph indentation, Serif/Sans-serif font toggle, and a **Focus Mode** that hides extra toolbars while writing.
 - **Real-Time Word & Text Metrics:** Live tracking for word count, character count (with and without spaces), sentence count, paragraph count, and estimated reading time.
@@ -16,7 +16,7 @@ A clean, distraction-free web-based essay writing studio built for descriptive e
 
 ---
 
-## 🚀 How to Use
+## How to Use
 
 1. Open the live link in any desktop or mobile browser.
 2. Enter your essay topic (or pick one from the sample prompts).
@@ -26,7 +26,7 @@ A clean, distraction-free web-based essay writing studio built for descriptive e
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **HTML5**
 - **Tailwind CSS** (via CDN)
@@ -34,6 +34,6 @@ A clean, distraction-free web-based essay writing studio built for descriptive e
 
 ---
 
-## 📄 License
+## License
 
 This project is open source and free to use for personal study and exam preparation.
